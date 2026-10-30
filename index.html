@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="বইঘর — অনলাইনে বই পড়ুন ও শিক্ষামূলক ভিডিও দেখুন">
+  <title>বইঘর | Online Library</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-icon">ব</span><span>বইঘর<small>আপনার ডিজিটাল লাইব্রেরি</small></span></a>
+    <nav><a href="#library">লাইব্রেরি</a><a href="#about">আমাদের সম্পর্কে</a></nav>
+    <button id="logoutBtn" class="btn btn-ghost hidden">লগ আউট</button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">READ · LEARN · GROW</span>
+        <h1>জ্ঞান থাকুক<br><span>আপনার হাতের মুঠোয়</span></h1>
+        <p>এক জায়গায় বই পড়ুন, শেখার ভিডিও দেখুন এবং নতুন কিছু জানুন—যেকোনো সময়।</p>
+        <a class="btn btn-primary" href="#library">লাইব্রেরি দেখুন <span>↗</span></a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="sun"></div><div class="book book-back"></div><div class="book book-mid"></div>
+        <div class="book book-front"><div class="book-lines"></div><b>জ্ঞান</b><small>নতুন পথের শুরু</small></div>
+        <div class="spark spark-one">✦</div><div class="spark spark-two">✧</div>
+      </div>
+    </section>
+
+    <section id="loginSection" class="login-panel">
+      <div><span class="eyebrow">আপনার অ্যাকাউন্ট</span><h2>লাইব্রেরিতে প্রবেশ করুন</h2><p>বই ও ভিডিও দেখতে প্রথমে সাইন ইন করুন।</p></div>
+      <div class="social-buttons">
+        <button class="social google" data-provider="google"><span>G</span> Google দিয়ে চালিয়ে যান</button>
+        <button class="social facebook" data-provider="facebook"><span>f</span> Facebook দিয়ে চালিয়ে যান</button>
+        <button class="social github" data-provider="github"><span>⌘</span> GitHub দিয়ে চালিয়ে যান</button>
+      </div>
+      <p class="fineprint">সাইন ইন করলে আমাদের ব্যবহারের নিয়ম ও গোপনীয়তা নীতি মেনে নিচ্ছেন।</p>
+    </section>
+
+    <section id="accountPanel" class="account-panel hidden">
+      <div><span class="eyebrow">স্বাগতম</span><h2 id="welcomeText">আপনি সাইন ইন করেছেন</h2><p>আপনার লাইব্রেরি এখন ব্যবহার করতে পারবেন।</p></div>
+      <span id="adminBadge" class="admin-badge hidden">ADMIN</span>
+    </section>
+
+    <section id="adminPanel" class="admin-panel hidden">
+      <div class="section-heading"><div><span class="eyebrow">ADMIN WORKSPACE</span><h2>লাইব্রেরি পরিচালনা</h2><p>শুধু অনুমোদিত অ্যাডমিন বই/ভিডিও যোগ করতে পারবেন।</p></div></div>
+      <form id="uploadForm" class="upload-form">
+        <label>বই বা ভিডিওর নাম<input id="itemTitle" required maxlength="140" placeholder="যেমন: C Programming — Chapter 1"></label>
+        <label>বর্ণনা<textarea id="itemDescription" rows="3" maxlength="1000" placeholder="সংক্ষিপ্ত বর্ণনা"></textarea></label>
+        <div class="form-row">
+          <label>ধরন<select id="itemType"><option value="book">PDF বই</option><option value="video">ভিডিও</option></select></label>
+          <label>বিভাগ<input id="itemCategory" maxlength="60" placeholder="যেমন: Programming"></label>
+        </div>
+        <label>ফাইল নির্বাচন<input id="itemFile" type="file" required accept=".pdf,application/pdf"></label>
+        <p id="fileHint" class="hint">PDF ফাইল নির্বাচন করুন। সর্বোচ্চ 50 MB।</p>
+        <button class="btn btn-primary" type="submit">＋ আপলোড করুন</button>
+        <p id="uploadStatus" class="status" role="status"></p>
+      </form>
+      <div class="admin-note"><b>ভিডিও টিপস:</b> এই starter-এ নিরাপদ ও সহজ আপলোডের জন্য PDF এবং MP4/WebM ভিডিও সমর্থিত। ভিডিওর জন্য ধরন “ভিডিও” বেছে নিন। বড় ভিডিও হলে Supabase resumable upload যোগ করা উচিত।</div>
+    </section>
+
+    <section id="library" class="library-section">
+      <div class="section-heading">
+        <div><span class="eyebrow">DISCOVER SOMETHING NEW</span><h2>আপনার লাইব্রেরি</h2><p>বই পড়ুন, ভিডিও দেখে শিখুন।</p></div>
+        <div class="filters"><input id="searchInput" type="search" placeholder="বই বা ভিডিও খুঁজুন…" aria-label="লাইব্রেরিতে খুঁজুন"><select id="typeFilter" aria-label="ধরন বাছুন"><option value="all">সব</option><option value="book">বই</option><option value="video">ভিডিও</option></select></div>
+      </div>
+      <div id="libraryMessage" class="empty-state"><div class="empty-icon">▤</div><h3>আপনার বইয়ের জন্য অপেক্ষা করছি</h3><p>লাইব্রেরি দেখতে সাইন ইন করুন।</p></div>
+      <div id="itemsGrid" class="items-grid"></div>
+    </section>
+
+    <section id="about" class="about-strip"><div class="about-mark">✦</div><div><h2>জ্ঞান ভাগ করলে বাড়ে</h2><p>এই লাইব্রেরি পড়া, শেখা এবং নিজের জ্ঞানকে এগিয়ে নেওয়ার জন্য তৈরি।</p></div></section>
+  </main>
+  <footer><a class="brand footer-brand" href="#"><span class="brand-icon">ব</span><span>বইঘর<small>ডিজিটাল লাইব্রেরি</small></span></a><span>© <span id="year"></span> বইঘর · শেখা চলুক</span></footer>
+
+  <dialog id="readerDialog" class="reader-dialog">
+    <div class="reader-head"><div><span id="readerKind" class="eyebrow">READING ROOM</span><h2 id="readerTitle">বই</h2></div><button id="closeReader" class="close-btn" aria-label="বন্ধ করুন">✕</button></div>
+    <div id="readerContent" class="reader-content"></div>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
