@@ -40,7 +40,7 @@ $("closeAdmin").addEventListener("click",()=>hideModal("adminModal"));
 
 async function refreshBooks(){
   if(!client)return;
-  const {data,error}=await client.from("books").select("id,title,author,category,description,file_path").order("created_at",{ascending:false});
+  const {data,error}=await client.from("Ayon Books").select("id,title,author,category,description,file_path").order("created_at",{ascending:false});
   if(!error&&data){books=data.map((b,i)=>({...b,color:"c"+(i%8+1)}));renderBooks();}
 }
 async function refreshSession(){
@@ -78,10 +78,10 @@ $("uploadForm").addEventListener("submit",async e=>{
   if(file.size>25*1024*1024){$("uploadMessage").textContent="For this starter, keep PDFs under 25 MB.";return;}
   $("uploadMessage").textContent="Uploading…";
   const path=`${currentUser.id}/${crypto.randomUUID()}.pdf`;
-  const {error:storageError}=await client.storage.from("books").upload(path,file,{contentType:"application/pdf",upsert:false});
+  const {error:storageError}=await client.storage.from("Ayon Books").upload(path,file,{contentType:"application/pdf",upsert:false});
   if(storageError){$("uploadMessage").textContent=storageError.message;return;}
-  const {error}=await client.from("books").insert({title:$("bookTitle").value.trim(),author:$("bookAuthor").value.trim(),category:$("bookCategory").value,description:$("bookDescription").value.trim(),file_path:path});
-  if(error){await client.storage.from("books").remove([path]);$("uploadMessage").textContent=error.message;return;}
+  const {error}=await client.from("Ayon Books").insert({title:$("bookTitle").value.trim(),author:$("bookAuthor").value.trim(),category:$("bookCategory").value,description:$("bookDescription").value.trim(),file_path:path});
+  if(error){await client.storage.from("Ayon Books").remove([path]);$("uploadMessage").textContent=error.message;return;}
   $("uploadMessage").textContent="Book uploaded successfully.";
   $("uploadForm").reset();await refreshBooks();
 });
@@ -89,7 +89,7 @@ $("bookGrid").addEventListener("click",async e=>{
   const btn=e.target.closest("[data-read]");if(!btn)return;
   const book=books.find(b=>b.id===btn.dataset.read);if(!book)return;
   if(book.file_path&&client){
-    const {data,error}=await client.storage.from("books").createSignedUrl(book.file_path,300);
+    const {data,error}=await client.storage.from("Ayon Books").createSignedUrl(book.file_path,300);
     if(error){alert("Could not open this book: "+error.message);return;}
     window.open(data.signedUrl,"_blank","noopener");
   }else{
