@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#153b32">
+  <title>Ayon's Library</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-icon">▤</span><span>Ayon's <b>Library</b><small>YOUR PERSONAL READING SPACE</small></span></a>
+    <nav><a href="#library">Library</a><a href="#about">About</a><a href="#" id="loginNav">Admin login</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">A WORLD OF KNOWLEDGE</span>
+        <h1>Find your next<br><em>great read.</em></h1>
+        <p>A calm little corner for books, ideas, and lifelong learning.</p>
+        <a class="primary-btn" href="#library">Explore the library <span>↗</span></a>
+        <div class="hero-note"><span class="dot"></span> A growing collection, one book at a time</div>
+      </div>
+      <div class="hero-art" aria-label="Illustration of a cozy bookshelf">
+        <div class="sun"></div><div class="plant">♧</div>
+        <div class="shelf">
+          <div class="book b1"></div><div class="book b2"></div><div class="book b3"></div><div class="book b4"></div><div class="book b5"></div>
+          <div class="shelf-board"></div>
+          <div class="book b6"></div><div class="book b7"></div><div class="book b8"></div><div class="book b9"></div>
+          <div class="shelf-board second"></div>
+          <div class="vase">◡</div><div class="book b10"></div><div class="book b11"></div>
+        </div>
+        <span class="art-caption">Read • Learn • Grow</span>
+      </div>
+    </section>
+
+    <section class="library-section" id="library">
+      <div class="section-heading">
+        <div><span class="eyebrow">THE COLLECTION</span><h2>Explore the library</h2><p>Browse books shared with readers.</p></div>
+        <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Search books or authors…" aria-label="Search books"></div>
+      </div>
+      <div class="filter-row"><button class="filter active" data-category="All">All books</button><button class="filter" data-category="Programming">Programming</button><button class="filter" data-category="Science">Science</button><button class="filter" data-category="Literature">Literature</button><button class="filter" data-category="Other">Other</button><span id="bookCount" class="count">Sample collection</span></div>
+      <div id="bookGrid" class="book-grid"></div>
+      <div id="emptyState" class="empty hidden"><div>⌕</div><h3>No books found</h3><p>Try another search or category.</p></div>
+    </section>
+
+    <section class="about" id="about"><div class="about-mark">✳</div><div><span class="eyebrow">MADE FOR CURIOUS MINDS</span><h2>Every book opens a door.</h2><p>This library is built to make reading simple, welcoming, and accessible on mobile or desktop.</p></div></section>
+  </main>
+  <footer><a class="brand footer-brand" href="#"><span class="brand-icon">▤</span><span>Ayon's <b>Library</b><small>YOUR PERSONAL READING SPACE</small></span></a><span>Built for curious minds. © <span id="year"></span></span><div class="socials"><a href="#" aria-label="GitHub profile">GH</a><a href="#" aria-label="YouTube channel">YT</a><a href="#" aria-label="Facebook page">f</a></div></footer>
+
+  <div class="modal-backdrop hidden" id="loginModal">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="close" id="closeModal" aria-label="Close">×</button>
+      <div class="modal-logo">▤</div><span class="eyebrow">PRIVATE ADMIN AREA</span>
+      <h2 id="loginTitle">Welcome back.</h2><p>Sign in to manage your library.</p>
+      <form id="loginForm"><label>Email address<input id="email" type="email" autocomplete="username" required placeholder="you@example.com"></label><label>Password<input id="password" type="password" autocomplete="current-password" required placeholder="Your secure password"></label><button class="primary-btn full" type="submit">Sign in securely <span>→</span></button></form>
+      <button class="text-btn" id="resetPassword">Forgot password?</button>
+      <div class="divider"><span>SECURE ACCOUNT</span></div><p class="tiny">Admin sign-in becomes active after you connect your own Supabase project and create your account.</p>
+      <p id="authMessage" class="message" role="status"></p>
+    </section>
+  </div>
+
+  <div class="modal-backdrop hidden" id="adminModal">
+    <section class="modal admin-modal" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+      <button class="close" id="closeAdmin" aria-label="Close">×</button>
+      <span class="eyebrow">LIBRARY CONTROL</span><h2 id="adminTitle">Manage books</h2><p>Only the signed-in administrator can upload books.</p>
+      <form id="uploadForm"><label>Book title<input id="bookTitle" required maxlength="120" placeholder="e.g. Learning C++"></label><label>Author<input id="bookAuthor" maxlength="100" placeholder="Author name"></label><label>Category<select id="bookCategory"><option>Programming</option><option>Science</option><option>Literature</option><option>Other</option></select></label><label>Short description<textarea id="bookDescription" maxlength="500" rows="2" placeholder="What is this book about?"></textarea></label><label>PDF file<input id="bookFile" type="file" accept="application/pdf,.pdf" required></label><button class="primary-btn full" type="submit">Upload book <span>↑</span></button></form>
+      <button class="text-btn" id="changePassword">Send password reset email</button><button class="text-btn" id="signOut">Sign out</button><p id="uploadMessage" class="message" role="status"></p>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
