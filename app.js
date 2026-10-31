@@ -148,16 +148,35 @@ $("bookGrid").addEventListener("click",async e=>{
     return;
   }
  
+  if (!book.file_path || !client) {
+    alert("PDF file path is missing!");
+    return;
+  }
+ 
   const { data, error } = await client.storage
     .from("Ayon Books")
     .createSignedUrl(book.file_path, 300);
  
   if (error) {
-    alert(error.message);
+    alert("PDF Error: " + error.message);
     return;
   }
  
   window.open(data.signedUrl, "_blank");
+});
+ 
+// Supabase authentication
+if (client) {
+  client.auth.onAuthStateChange(() => {
+    refreshSession();
+  });
+ 
+  refreshSession();
+}
+ 
+// Show books
+renderBooks();
+has context menu
 });
 if(client){client.auth.onAuthStateChange(()=>refreshSession());refreshSession();}
 renderBooks();
