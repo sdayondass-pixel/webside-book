@@ -135,7 +135,7 @@ $("uploadForm").addEventListener("submit",async e=>{
   await refreshBooks();
 });
 $("bookGrid").addEventListener("click",async e=>{
- $("bookGrid").addEventListener("click", async e => {
+ 
   const btn = e.target.closest("[data-read]");
   if (!btn) return;
  
