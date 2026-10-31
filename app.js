@@ -176,7 +176,7 @@ if (client) {
  
 // Show books
 renderBooks();
-has context menu
+
 });
 if(client){client.auth.onAuthStateChange(()=>refreshSession());refreshSession();}
 renderBooks();
