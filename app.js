@@ -72,18 +72,67 @@ $("changePassword").addEventListener("click",async()=>{
 $("signOut").addEventListener("click",async()=>{if(client)await client.auth.signOut();currentUser=null;hideModal("adminModal");$("loginNav").textContent="Admin login";$("loginNav").onclick=e=>{e.preventDefault();showModal("loginModal");};});
 $("uploadForm").addEventListener("submit",async e=>{
   e.preventDefault();
-  if(!client||!currentUser){$("uploadMessage").textContent="Secure upload is not active. Connect Supabase and sign in first.";return;}
-  const file=$("bookFile").files[0];
-  if(!file||file.type!=="application/pdf"){ $("uploadMessage").textContent="Please choose a PDF file.";return;}
-  if(file.size>25*1024*1024){$("uploadMessage").textContent="For this starter, keep PDFs under 25 MB.";return;}
-  $("uploadMessage").textContent="Uploading…";
-  const path=`${currentUser.id}/${crypto.randomUUID()}.pdf`;
-  const {error:storageError}=await client.storage.from("Ayon Books").upload(path,file,{contentType:"application/pdf",upsert:false});
-  if(storageError){$("uploadMessage").textContent=storageError.message;return;}
-  const {error}=await client.from("books").insert({title:$("bookTitle").value.trim(),author:$("bookAuthor").value.trim(),category:$("bookCategory").value,description:$("bookDescription").value.trim(),file_path:path});
-  if(error){await client.storage.from("Ayon Books").remove([path]);$("uploadMessage").textContent=error.message;return;}
-  $("uploadMessage").textContent="Book uploaded successfully.";
-  $("uploadForm").reset();await refreshBooks();
+ 
+  if (!client || !currentUser) {
+    $("uploadMessage").textContent = "Please sign in first.";
+    return;
+  }
+ 
+  const file = $("bookFile").files[0];
+ 
+  if (!file || file.type !== "application/pdf") {
+    $("uploadMessage").textContent = "Please select a PDF file.";
+    return;
+  }
+ 
+  if (file.size > 25 * 1024 * 1024) {
+    $("uploadMessage").textContent = "PDF must be under 25 MB.";
+    return;
+  }
+ 
+  $("uploadMessage").textContent = "Uploading PDF...";
+ 
+  const path = `${currentUser.id}/${crypto.randomUUID()}.pdf`;
+ 
+  // Step 1: Upload PDF to Storage
+  const { error: storageError } = await client.storage
+    .from("Ayon Books")
+    .upload(path, file, {
+      contentType: "application/pdf",
+      upsert: false
+    });
+ 
+  if (storageError) {
+    $("uploadMessage").textContent =
+      "STORAGE ERROR: " + storageError.message;
+    return;
+  }
+ 
+  // Step 2: Save book information to database
+  $("uploadMessage").textContent = "Saving book information...";
+ 
+  const { error: dbError } = await client
+    .from("books")
+    .insert({
+      title: $("bookTitle").value.trim(),
+      author: $("bookAuthor").value.trim(),
+      category: $("bookCategory").value,
+      description: $("bookDescription").value.trim(),
+      file_path: path
+    });
+ 
+  if (dbError) {
+    await client.storage.from("Ayon Books").remove([path]);
+ 
+    $("uploadMessage").textContent =
+      "DATABASE ERROR: " + dbError.message;
+    return;
+  }
+ 
+  $("uploadMessage").textContent = "Book uploaded successfully!";
+  $("uploadForm").reset();
+ 
+  await refreshBooks();
 });
 $("bookGrid").addEventListener("click",async e=>{
   const btn=e.target.closest("[data-read]");if(!btn)return;
