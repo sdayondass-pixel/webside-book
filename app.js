@@ -2,8 +2,8 @@
    Preview mode works without credentials using sample cards.
    Real authentication/storage requires your own Supabase project.
 */
-const SUPABASE_URL = "";       // Add your Supabase Project URL
-const SUPABASE_ANON_KEY = "";  // Add your Supabase publishable/anon key (never a service-role key)
+const SUPABASE_URL = "https://pjqaxjfobsxjgemcnbjy.supabase.co";       // Add your Supabase Project URL
+const SUPABASE_ANON_KEY = "sb_publishable_5Rr7Dad2tr2B4sdBqR_vPg_ONZiWMxf";  // Add your Supabase publishable/anon key (never a service-role key)
 const supabaseReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
 const client = supabaseReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
