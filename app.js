@@ -40,7 +40,7 @@ $("closeAdmin").addEventListener("click",()=>hideModal("adminModal"));
 
 async function refreshBooks(){
   if(!client)return;
-  const {data,error}=await client.from("Ayon Books").select("id,title,author,category,description,file_path").order("created_at",{ascending:false});
+  const {data,error}=await client.from("books").select("id,title,author,category,description,file_path").order("created_at",{ascending:false});
   if(!error&&data){books=data.map((b,i)=>({...b,color:"c"+(i%8+1)}));renderBooks();}
 }
 async function refreshSession(){
@@ -80,7 +80,7 @@ $("uploadForm").addEventListener("submit",async e=>{
   const path=`${currentUser.id}/${crypto.randomUUID()}.pdf`;
   const {error:storageError}=await client.storage.from("Ayon Books").upload(path,file,{contentType:"application/pdf",upsert:false});
   if(storageError){$("uploadMessage").textContent=storageError.message;return;}
-  const {error}=await client.from("Ayon Books").insert({title:$("bookTitle").value.trim(),author:$("bookAuthor").value.trim(),category:$("bookCategory").value,description:$("bookDescription").value.trim(),file_path:path});
+  const {error}=await client.from("books").insert({title:$("bookTitle").value.trim(),author:$("bookAuthor").value.trim(),category:$("bookCategory").value,description:$("bookDescription").value.trim(),file_path:path});
   if(error){await client.storage.from("Ayon Books").remove([path]);$("uploadMessage").textContent=error.message;return;}
   $("uploadMessage").textContent="Book uploaded successfully.";
   $("uploadForm").reset();await refreshBooks();
