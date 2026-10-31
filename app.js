@@ -135,15 +135,29 @@ $("uploadForm").addEventListener("submit",async e=>{
   await refreshBooks();
 });
 $("bookGrid").addEventListener("click",async e=>{
-  const btn=e.target.closest("[data-read]");if(!btn)return;
-  const book=books.find(b=>b.id===btn.dataset.read);if(!book)return;
-  if(book.file_path&&client){
-    const {data,error}=await client.storage.from("Ayon Books").createSignedUrl(book.file_path,300);
-    if(error){alert("Could not open this book: "+error.message);return;}
-    window.open(data.signedUrl,"_blank","noopener");
-  }else{
-    alert("This is a sample preview card, not a real book file. Connect Supabase and upload a PDF to make it readable.");
+ $("bookGrid").addEventListener("click", async e => {
+  const btn = e.target.closest("[data-read]");
+  if (!btn) return;
+ 
+  const book = books.find(
+    b => String(b.id) === String(btn.dataset.read)
+  );
+ 
+  if (!book) {
+    alert("Book not found!");
+    return;
   }
+ 
+  const { data, error } = await client.storage
+    .from("Ayon Books")
+    .createSignedUrl(book.file_path, 300);
+ 
+  if (error) {
+    alert(error.message);
+    return;
+  }
+ 
+  window.open(data.signedUrl, "_blank");
 });
 if(client){client.auth.onAuthStateChange(()=>refreshSession());refreshSession();}
 renderBooks();
