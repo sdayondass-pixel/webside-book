@@ -42,14 +42,14 @@ using (auth.uid() = '1614d6dc-07ef-42c6-878e-4d69714a86a3'::uuid);
 drop policy if exists "Admin uploads book PDFs" on storage.objects;
 create policy "Admin uploads book PDFs" on storage.objects
 for insert to authenticated
-with check (bucket_id = 'books' and auth.uid() = '1614d6dc-07ef-42c6-878e-4d69714a86a3'::uuid);
+with check (bucket_id = 'Ayon Books' and auth.uid() = '1614d6dc-07ef-42c6-878e-4d69714a86a3'::uuid);
 
 drop policy if exists "Readers can download book PDFs" on storage.objects;
 create policy "Readers can download book PDFs" on storage.objects
 for select to anon, authenticated
-using (bucket_id = 'books');
+using (bucket_id = 'Ayon Books');
 
 drop policy if exists "Admin deletes book PDFs" on storage.objects;
 create policy "Admin deletes book PDFs" on storage.objects
 for delete to authenticated
-using (bucket_id = 'books' and auth.uid() = '1614d6dc-07ef-42c6-878e-4d69714a86a3'::uuid);
+using (bucket_id = 'Ayon Books' and auth.uid() = '1614d6dc-07ef-42c6-878e-4d69714a86a3'::uuid);
