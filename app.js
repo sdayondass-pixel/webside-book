@@ -1,182 +1,640 @@
-/* Ayon's Library
-   Preview mode works without credentials using sample cards.
-   Real authentication/storage requires your own Supabase project.
-*/
-const SUPABASE_URL = "https://pjqaxjfobsxjgemcnbjy.supabase.co";       // Add your Supabase Project URL
-const SUPABASE_ANON_KEY = "sb_publishable_5Rr7Dad2tr2B4sdBqR_vPg_ONZiWMxf";  // Add your Supabase publishable/anon key (never a service-role key)
-const supabaseReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
-const client = supabaseReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-const samples = [
-  {id:"s1",title:"The Art of Learning",author:"A collection for curious minds",category:"Other",description:"A sample book card. Upload your own PDF after setup.",color:"c1"},
-  {id:"s2",title:"Programming Basics",author:"Computer Science",category:"Programming",description:"A sample book card. Upload your own PDF after setup.",color:"c2"},
-  {id:"s3",title:"Exploring Science",author:"Science Collection",category:"Science",description:"A sample book card. Upload your own PDF after setup.",color:"c3"},
-  {id:"s4",title:"Stories & Literature",author:"Classic Reads",category:"Literature",description:"A sample book card. Upload your own PDF after setup.",color:"c4"},
-  {id:"s5",title:"Data Structures",author:"Computer Science",category:"Programming",description:"A sample book card. Upload your own PDF after setup.",color:"c5"},
-  {id:"s6",title:"The Natural World",author:"Science Collection",category:"Science",description:"A sample book card. Upload your own PDF after setup.",color:"c6"},
-  {id:"s7",title:"Short Stories",author:"Literature Collection",category:"Literature",description:"A sample book card. Upload your own PDF after setup.",color:"c7"},
-  {id:"s8",title:"Web Development",author:"Computer Science",category:"Programming",description:"A sample book card. Upload your own PDF after setup.",color:"c8"}
-];
-let books = [...samples], category = "All", currentUser = null;
+/* =====================================
+   AYON'S LIBRARY
+   Supabase + Library Management
+===================================== */
+
+const SUPABASE_URL = "https://pjqaxjfobsxjgemcnbjy.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_5Rr7Dad2tr2B4sdBqR_vPg_ONZiWMxf";
+
+const supabaseReady = Boolean(
+  SUPABASE_URL &&
+  SUPABASE_ANON_KEY &&
+  window.supabase
+);
+
+const client = supabaseReady
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+// =====================================
+// DOM HELPERS
+// =====================================
+
 const $ = id => document.getElementById(id);
+
 $("year").textContent = new Date().getFullYear();
 
-function safeText(value=""){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function renderBooks(){
-  const q=$("search").value.trim().toLowerCase();
-  const filtered=books.filter(b=>(category==="All"||b.category===category)&&(`${b.title} ${b.author} ${b.category}`).toLowerCase().includes(q));
-  $("bookGrid").innerHTML=filtered.map((b,i)=>`<article class="book-card"><div class="cover ${b.color||"c"+(i%8+1)}"><span>${safeText(b.title)}</span><small>AYON'S LIBRARY</small></div><span class="book-category">${safeText(b.category)}</span><h3>${safeText(b.title)}</h3><p class="author">${safeText(b.author||"Unknown author")}</p><button class="read-btn" data-read="${safeText(b.id)}">View book ↗</button></article>`).join("");
-  $("emptyState").classList.toggle("hidden",filtered.length!==0);
-  $("bookCount").textContent=supabaseReady?`${books.length} books`:"Preview collection";
-}
-$("search").addEventListener("input",renderBooks);
-document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".filter").forEach(b=>b.classList.remove("active"));btn.classList.add("active");category=btn.dataset.category;renderBooks();}));
-function showModal(id){$(id).classList.remove("hidden");}
-function hideModal(id){$(id).classList.add("hidden");}
-$("loginNav").addEventListener("click",e=>{e.preventDefault();$("authMessage").textContent=supabaseReady?"":"Preview only: connect Supabase using the SETUP.md guide to enable secure sign-in.";showModal("loginModal");});
-$("closeModal").addEventListener("click",()=>hideModal("loginModal"));
-$("closeAdmin").addEventListener("click",()=>hideModal("adminModal"));
-["loginModal","adminModal"].forEach(id=>$(id).addEventListener("click",e=>{if(e.target===$(id))hideModal(id);}));
+let category = "All";
+let currentUser = null;
+let books = [];
 
-async function refreshBooks(){
-  if(!client)return;
-  const {data,error}=await client.from("books").select("id,title,author,category,description,file_path").order("created_at",{ascending:false});
-  if(!error&&data){books=data.map((b,i)=>({...b,color:"c"+(i%8+1)}));renderBooks();}
+// =====================================
+// SAMPLE BOOKS
+// =====================================
+
+const samples = [
+  {
+    id: "s1",
+    title: "The Art of Learning",
+    author: "A collection for curious minds",
+    category: "Other",
+    description: "A sample book card.",
+    color: "c1"
+  },
+  {
+    id: "s2",
+    title: "Programming Basics",
+    author: "Computer Science",
+    category: "Programming",
+    description: "Learn programming.",
+    color: "c2"
+  },
+  {
+    id: "s3",
+    title: "Exploring Science",
+    author: "Science Collection",
+    category: "Science",
+    description: "Explore science.",
+    color: "c3"
+  },
+  {
+    id: "s4",
+    title: "Stories & Literature",
+    author: "Classic Reads",
+    category: "Literature",
+    description: "Classic literature.",
+    color: "c4"
+  },
+  {
+    id: "s5",
+    title: "Data Structures",
+    author: "Computer Science",
+    category: "Programming",
+    description: "Learn data structures.",
+    color: "c5"
+  },
+  {
+    id: "s6",
+    title: "The Natural World",
+    author: "Science Collection",
+    category: "Science",
+    description: "Discover nature.",
+    color: "c6"
+  },
+  {
+    id: "s7",
+    title: "Short Stories",
+    author: "Literature Collection",
+    category: "Literature",
+    description: "Enjoy short stories.",
+    color: "c7"
+  },
+  {
+    id: "s8",
+    title: "Web Development",
+    author: "Computer Science",
+    category: "Programming",
+    description: "Learn web development.",
+    color: "c8"
+  }
+];
+
+// =====================================
+// SECURITY HELPER
+// =====================================
+
+function safeText(value = "") {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
 }
-async function refreshSession(){
-  if(!client)return;
-  const {data}=await client.auth.getSession();
-  currentUser=data.session?.user||null;
-  if(currentUser){$("loginNav").textContent="Admin panel";$("loginNav").onclick=e=>{e.preventDefault();showModal("adminModal");};}
-  await refreshBooks();
+
+// =====================================
+// MODAL FUNCTIONS
+// =====================================
+
+function showModal(id) {
+  $(id).classList.remove("hidden");
 }
-$("loginForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  if(!client){$("authMessage").textContent="Secure login is not active yet. Follow SETUP.md to connect your Supabase project.";return;}
-  $("authMessage").textContent="Signing in…";
-  const {data,error}=await client.auth.signInWithPassword({email:$("email").value,password:$("password").value});
-  if(error){$("authMessage").textContent=error.message;return;}
-  currentUser=data.user;hideModal("loginModal");$("loginNav").textContent="Admin panel";showModal("adminModal");
+
+function hideModal(id) {
+  $(id).classList.add("hidden");
+}
+
+$("closeModal").addEventListener("click", () => {
+  hideModal("loginModal");
 });
-$("resetPassword").addEventListener("click",async()=>{
-  if(!client){$("authMessage").textContent="Connect Supabase first; then password reset email will work.";return;}
-  const email=$("email").value.trim();if(!email){$("authMessage").textContent="Enter your account email above first.";return;}
-  const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
-  $("authMessage").textContent=error?error.message:"If this account exists, a password reset email has been sent.";
+
+$("closeAdmin").addEventListener("click", () => {
+  hideModal("adminModal");
 });
-$("changePassword").addEventListener("click",async()=>{
-  if(!client||!currentUser){$("uploadMessage").textContent="Sign in with your connected admin account first.";return;}
-  const {error}=await client.auth.resetPasswordForEmail(currentUser.email,{redirectTo:location.origin+location.pathname});
-  $("uploadMessage").textContent=error?error.message:"Password reset instructions sent to your email.";
+
+["loginModal", "adminModal"].forEach(id => {
+  $(id).addEventListener("click", event => {
+    if (event.target === $(id)) {
+      hideModal(id);
+    }
+  });
 });
-$("signOut").addEventListener("click",async()=>{if(client)await client.auth.signOut();currentUser=null;hideModal("adminModal");$("loginNav").textContent="Admin login";$("loginNav").onclick=e=>{e.preventDefault();showModal("loginModal");};});
-$("uploadForm").addEventListener("submit",async e=>{
-  e.preventDefault();
- 
-  if (!client || !currentUser) {
-    $("uploadMessage").textContent = "Please sign in first.";
-    return;
+
+// =====================================
+// ADMIN NAVIGATION
+// =====================================
+
+function updateNavigation() {
+  const loginNav = $("loginNav");
+
+  loginNav.textContent = currentUser
+    ? "Admin panel"
+    : "Admin login";
+
+  loginNav.onclick = event => {
+    event.preventDefault();
+
+    if (currentUser) {
+      showModal("adminModal");
+    } else {
+      showModal("loginModal");
+    }
+  };
+}
+
+$("loginNav").addEventListener("click", event => {
+  event.preventDefault();
+
+  if (currentUser) {
+    showModal("adminModal");
+  } else {
+    $("authMessage").textContent = client
+      ? ""
+      : "Supabase connection is not available.";
+
+    showModal("loginModal");
   }
- 
-  const file = $("bookFile").files[0];
- 
-  if (!file || file.type !== "application/pdf") {
-    $("uploadMessage").textContent = "Please select a PDF file.";
-    return;
-  }
- 
-  if (file.size > 25 * 1024 * 1024) {
-    $("uploadMessage").textContent = "PDF must be under 25 MB.";
-    return;
-  }
- 
-  $("uploadMessage").textContent = "Uploading PDF...";
- 
-  const path = `${currentUser.id}/${crypto.randomUUID()}.pdf`;
- 
-  // Step 1: Upload PDF to Storage
-  const { error: storageError } = await client.storage
-    .from("Ayon Books")
-    .upload(path, file, {
-      contentType: "application/pdf",
-      upsert: false
-    });
- 
-  if (storageError) {
-    $("uploadMessage").textContent =
-      "STORAGE ERROR: " + storageError.message;
-    return;
-  }
- 
-  // Step 2: Save book information to database
-  $("uploadMessage").textContent = "Saving book information...";
- 
-  const { error: dbError } = await client
-    .from("books")
-    .insert({
-      title: $("bookTitle").value.trim(),
-      author: $("bookAuthor").value.trim(),
-      category: $("bookCategory").value,
-      description: $("bookDescription").value.trim(),
-      file_path: path
-    });
- 
-  if (dbError) {
-    await client.storage.from("Ayon Books").remove([path]);
- 
-    $("uploadMessage").textContent =
-      "DATABASE ERROR: " + dbError.message;
-    return;
-  }
- 
-  $("uploadMessage").textContent = "Book uploaded successfully!";
-  $("uploadForm").reset();
- 
-  await refreshBooks();
 });
-$("bookGrid").addEventListener("click",async e=>{
- 
-  const btn = e.target.closest("[data-read]");
-  if (!btn) return;
- 
-  const book = books.find(
-    b => String(b.id) === String(btn.dataset.read)
+
+// =====================================
+// RENDER BOOKS
+// =====================================
+
+function renderBooks() {
+  const query = $("search").value.trim().toLowerCase();
+
+  const filtered = books.filter(book => {
+    const matchesCategory =
+      category === "All" || book.category === category;
+
+    const searchText = [
+      book.title,
+      book.author,
+      book.category
+    ].join(" ").toLowerCase();
+
+    return matchesCategory && searchText.includes(query);
+  });
+
+  $("bookGrid").innerHTML = filtered.map((book, index) => `
+    <article class="book-card">
+
+      <div class="cover ${book.color || `c${index % 8 + 1}`}">
+        <span>${safeText(book.title)}</span>
+        <small>AYON'S LIBRARY</small>
+      </div>
+
+      <span class="book-category">
+        ${safeText(book.category)}
+      </span>
+
+      <h3>${safeText(book.title)}</h3>
+
+      <p class="author">
+        ${safeText(book.author || "Unknown author")}
+      </p>
+
+      <button
+        class="read-btn"
+        data-read="${safeText(book.id)}"
+        type="button">
+        View book ↗
+      </button>
+
+    </article>
+  `).join("");
+
+  $("emptyState").classList.toggle(
+    "hidden",
+    filtered.length !== 0
   );
- 
+
+  $("bookCount").textContent =
+    `${books.length} books`;
+}
+
+// =====================================
+// SEARCH
+// =====================================
+
+$("search").addEventListener("input", renderBooks);
+
+// =====================================
+// CATEGORY FILTER
+// =====================================
+
+document.querySelectorAll(".filter").forEach(button => {
+  button.addEventListener("click", () => {
+
+    document.querySelectorAll(".filter").forEach(btn => {
+      btn.classList.remove("active");
+    });
+
+    button.classList.add("active");
+
+    category = button.dataset.category;
+
+    renderBooks();
+  });
+});
+
+// =====================================
+// LOAD BOOKS FROM SUPABASE
+// =====================================
+
+async function refreshBooks() {
+
+  if (!client) {
+    books = [...samples];
+    renderBooks();
+    return;
+  }
+
+  const { data, error } = await client
+    .from("books")
+    .select("id,title,author,category,description,file_path")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Book loading error:", error);
+
+    $("bookCount").textContent = "Unable to load books";
+    return;
+  }
+
+  books = (data || []).map((book, index) => ({
+    ...book,
+    color: `c${index % 8 + 1}`
+  }));
+
+  renderBooks();
+}
+
+// =====================================
+// AUTHENTICATION SESSION
+// =====================================
+
+async function refreshSession() {
+
+  if (!client) {
+    updateNavigation();
+    return;
+  }
+
+  const { data, error } = await client.auth.getSession();
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  currentUser = data.session?.user || null;
+
+  updateNavigation();
+
+  await refreshBooks();
+}
+
+// =====================================
+// ADMIN LOGIN
+// =====================================
+
+$("loginForm").addEventListener("submit", async event => {
+
+  event.preventDefault();
+
+  if (!client) {
+    $("authMessage").textContent =
+      "Supabase connection is not configured.";
+
+    return;
+  }
+
+  $("authMessage").textContent = "Signing in...";
+
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  const { data, error } = await client.auth
+    .signInWithPassword({
+      email,
+      password
+    });
+
+  if (error) {
+    $("authMessage").textContent = error.message;
+    return;
+  }
+
+  currentUser = data.user;
+
+  updateNavigation();
+
+  $("authMessage").textContent = "";
+
+  hideModal("loginModal");
+
+  showModal("adminModal");
+});
+
+// =====================================
+// FORGOT PASSWORD
+// =====================================
+
+$("resetPassword").addEventListener("click", async () => {
+
+  if (!client) {
+    $("authMessage").textContent =
+      "Connect Supabase first.";
+
+    return;
+  }
+
+  const email = $("email").value.trim();
+
+  if (!email) {
+    $("authMessage").textContent =
+      "Please enter your email address.";
+
+    return;
+  }
+
+  const { error } = await client.auth
+    .resetPasswordForEmail(email, {
+      redirectTo: location.origin + location.pathname
+    });
+
+  $("authMessage").textContent = error
+    ? error.message
+    : "Password reset instructions sent if the account exists.";
+});
+
+// =====================================
+// CHANGE PASSWORD
+// =====================================
+
+$("changePassword").addEventListener("click", async () => {
+
+  if (!client || !currentUser) {
+    $("uploadMessage").textContent =
+      "Please sign in first.";
+
+    return;
+  }
+
+  const { error } = await client.auth
+    .resetPasswordForEmail(currentUser.email, {
+      redirectTo: location.origin + location.pathname
+    });
+
+  $("uploadMessage").textContent = error
+    ? error.message
+    : "Password reset instructions sent.";
+});
+
+// =====================================
+// SIGN OUT
+// =====================================
+
+$("signOut").addEventListener("click", async () => {
+
+  if (client) {
+    const { error } = await client.auth.signOut();
+
+    if (error) {
+      $("uploadMessage").textContent = error.message;
+      return;
+    }
+  }
+
+  currentUser = null;
+
+  updateNavigation();
+
+  hideModal("adminModal");
+
+  $("uploadMessage").textContent = "";
+});
+
+// =====================================
+// UPLOAD PDF BOOK
+// =====================================
+
+$("uploadForm").addEventListener("submit", async event => {
+
+  event.preventDefault();
+
+  if (!client || !currentUser) {
+    $("uploadMessage").textContent =
+      "Please sign in first.";
+
+    return;
+  }
+
+  const file = $("bookFile").files[0];
+
+  if (!file || (
+    file.type !== "application/pdf" &&
+    !file.name.toLowerCase().endsWith(".pdf")
+  )) {
+    $("uploadMessage").textContent =
+      "Please select a valid PDF file.";
+
+    return;
+  }
+
+  if (file.size > 25 * 1024 * 1024) {
+    $("uploadMessage").textContent =
+      "PDF must be under 25 MB.";
+
+    return;
+  }
+
+  const title = $("bookTitle").value.trim();
+
+  if (!title) {
+    $("uploadMessage").textContent =
+      "Please enter a book title.";
+
+    return;
+  }
+
+  const submitButton = $("uploadForm").querySelector(
+    'button[type="submit"]'
+  );
+
+  submitButton.disabled = true;
+
+  try {
+
+    $("uploadMessage").textContent = "Uploading PDF...";
+
+    const path =
+      `${currentUser.id}/${crypto.randomUUID()}.pdf`;
+
+    // Upload PDF to Supabase Storage
+
+    const { error: storageError } = await client.storage
+      .from("Ayon Books")
+      .upload(path, file, {
+        contentType: "application/pdf",
+        upsert: false
+      });
+
+    if (storageError) {
+      throw new Error(storageError.message);
+    }
+
+    $("uploadMessage").textContent =
+      "Saving book information...";
+
+    // Save book information to database
+
+    const { error: dbError } = await client
+      .from("books")
+      .insert({
+        title,
+        author: $("bookAuthor").value.trim(),
+        category: $("bookCategory").value,
+        description: $("bookDescription").value.trim(),
+        file_path: path
+      });
+
+    if (dbError) {
+
+      await client.storage
+        .from("Ayon Books")
+        .remove([path]);
+
+      throw new Error(dbError.message);
+    }
+
+    $("uploadMessage").textContent =
+      "Book uploaded successfully!";
+
+    $("uploadForm").reset();
+
+    await refreshBooks();
+
+  } catch (error) {
+
+    console.error("Upload error:", error);
+
+    $("uploadMessage").textContent =
+      "Upload failed: " + error.message;
+
+  } finally {
+
+    submitButton.disabled = false;
+
+  }
+
+});
+
+// =====================================
+// VIEW / READ PDF BOOK
+// =====================================
+
+$("bookGrid").addEventListener("click", async event => {
+
+  const button = event.target.closest("[data-read]");
+
+  if (!button) return;
+
+  const book = books.find(
+    item => String(item.id) === button.dataset.read
+  );
+
   if (!book) {
     alert("Book not found!");
     return;
   }
- 
+
   if (!book.file_path || !client) {
-    alert("PDF file path is missing!");
+    alert("This is a sample book. No PDF is available.");
     return;
   }
- 
-  const { data, error } = await client.storage
-    .from("Ayon Books")
-    .createSignedUrl(book.file_path, 300);
- 
-  if (error) {
-    alert("PDF Error: " + error.message);
-    return;
+
+  button.disabled = true;
+
+  try {
+
+    const { data, error } = await client.storage
+      .from("Ayon Books")
+      .createSignedUrl(book.file_path, 300);
+
+    if (error) {
+      throw error;
+    }
+
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+
+  } catch (error) {
+
+    console.error("PDF error:", error);
+
+    alert("Unable to open PDF: " + error.message);
+
+  } finally {
+
+    button.disabled = false;
+
   }
- 
-  window.open(data.signedUrl, "_blank");
-});
- 
-// Supabase authentication
-if (client) {
-  client.auth.onAuthStateChange(() => {
-    refreshSession();
-  });
- 
-  refreshSession();
-}
- 
-// Show books
-renderBooks();
 
 });
-if(client){client.auth.onAuthStateChange(()=>refreshSession());refreshSession();}
-renderBooks();
+
+// =====================================
+// SUPABASE AUTH STATE
+// =====================================
+
+if (client) {
+
+  client.auth.onAuthStateChange(() => {
+
+    setTimeout(() => {
+      refreshSession();
+    }, 0);
+
+  });
+
+}
+
+// =====================================
+// INITIALIZE LIBRARY
+// =====================================
+
+async function initializeLibrary() {
+
+  if (client) {
+    await refreshSession();
+  } else {
+    books = [...samples];
+    renderBooks();
+    updateNavigation();
+  }
+
+}
+
+initializeLibrary();
